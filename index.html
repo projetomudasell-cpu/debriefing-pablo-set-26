@@ -129,6 +129,7 @@ table.db-t { border-collapse: collapse; width: 100%; font-size: var(--cds-font-s
 .db-t tr.tot td { font-weight: 600; border-top: 1px solid var(--color-fg-muted); }
 .db-t tr.grp td { background: color-mix(in srgb, var(--color-fg) 4%, transparent); font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); }
 .db-t .miss { color: var(--color-fg-muted); }
+.db-t td.heat { font-weight: 600; }
 .db-t .nt { display: block; color: var(--color-fg-muted); font-size: .92em; white-space: normal; }
 .db-t a { color: inherit; text-decoration: underline; text-decoration-color: var(--color-border-line); text-underline-offset: 2px; margin-left: 6px; font-size: .92em; }
 .db-t a:hover { text-decoration-color: currentColor; }
@@ -410,6 +411,16 @@ table.db-t { border-collapse: collapse; width: 100%; font-size: var(--cds-font-s
       const tbody = table.querySelector('tbody');
       const maxes = {};
       cols.forEach((c) => { if (c.bar) maxes[c.field] = Math.max(1, ...rows.map((r) => isNum(r[c.field]) ? r[c.field] : 0)); });
+      const heatVals = {};
+      cols.forEach((c) => { if (c.heat) heatVals[c.field] = rows.map((r) => r[c.field]).filter(isNum).sort((a, b) => a - b); });
+      const heatOf = (c, v) => {
+        const arr = heatVals[c.field]; if (!arr || arr.length < 2 || !isNum(v)) return null;
+        const lo = arr.findIndex((x) => x >= v), hi = arr.length - 1 - [...arr].reverse().findIndex((x) => x <= v);
+        let t = ((lo + hi) / 2) / (arr.length - 1);
+        if (c.heat === 'low') t = 1 - t;
+        const k = Math.round(Math.abs(t - 0.5) * 2 * 55);
+        return k < 3 ? null : `color-mix(in srgb, var(${t > 0.5 ? '--color-ok' : '--color-bad'}) ${k}%, transparent)`;
+      };
       tbody.replaceChildren(...rs.map((r) => {
         const tr = el('tr', opts.rowClass ? opts.rowClass(r) : null);
         tr.dataset.key = r[keyCol];
@@ -423,6 +434,7 @@ table.db-t { border-collapse: collapse; width: 100%; font-size: var(--cds-font-s
               const w = el('span', 'cellbar'); const b = el('span', 'b'); b.style.width = (v / maxes[c.field] * 56) + 'px';
               w.append(el('span', null, txt), b); td.appendChild(w);
             } else { td.textContent = txt; if (txt === '—') td.classList.add('miss'); }
+            if (c.heat) { const bg = heatOf(c, v); if (bg) { td.style.background = bg; td.classList.add('heat'); } }
           }
           tr.appendChild(td);
         });
@@ -615,14 +627,14 @@ table.db-t { border-collapse: collapse; width: 100%; font-size: var(--cds-font-s
         { field: 'ingressos_quente', label: 'Ingr. quente', fmt: 'int' },
         { field: 'ingressos_frio', label: 'Ingr. frio', fmt: 'int' },
         { field: 'ingressos_organico', label: 'Ingr. orgânico', fmt: 'int' },
-        { field: 'cpa', label: 'CPA ingresso', fmt: 'brl' },
+        { field: 'cpa', label: 'CPA ingresso', fmt: 'brl', heat: 'low' },
         { field: 'p3p_quente', label: 'P3P quente', fmt: 'int' },
         { field: 'conversao_quente', label: 'Conv. quente', fmt: 'pct' },
         { field: 'p3p_frio', label: 'P3P frio', fmt: 'int' },
         { field: 'conversao_frio', label: 'Conv. frio', fmt: 'pct' },
         { field: 'p3p_organico', label: 'P3P orgânico', fmt: 'int' },
         { field: 'compradores_p3p', label: 'Compradores P3P', fmt: 'int' },
-        { field: 'conversao_p3p', label: 'Conv. P3P', fmt: 'pct' },
+        { field: 'conversao_p3p', label: 'Conv. P3P', fmt: 'pct', heat: 'high' },
         { field: 'cac_p3p', label: 'CAC P3P', fmt: 'brl' },
         { field: 'biblioteca', label: 'OB1', fmt: 'int' },
         { field: 'pack_express', label: 'OB2', fmt: 'int' },
