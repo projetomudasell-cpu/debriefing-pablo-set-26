@@ -130,6 +130,10 @@ table.db-t { border-collapse: collapse; width: 100%; font-size: var(--cds-font-s
 .db-t tr.grp td { background: color-mix(in srgb, var(--color-fg) 4%, transparent); font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); }
 .db-t .miss { color: var(--color-fg-muted); }
 .db-t td.heat { font-weight: 600; }
+.db { --db-heat-mid: #e2b21c; }
+.db-t td.hatch, .db-t th.hatch { background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--color-fg) 9%, transparent) 0 2px, transparent 2px 7px); }
+.db-t th.hatch { background-color: var(--color-panel); }
+.db-hatch-key { display: inline-block; width: 14px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 6px; border: 1px solid var(--color-border-line); background-image: repeating-linear-gradient(135deg, color-mix(in srgb, var(--color-fg) 22%, transparent) 0 2px, transparent 2px 5px); }
 .db-t .nt { display: block; color: var(--color-fg-muted); font-size: .92em; white-space: normal; }
 .db-t a { color: inherit; text-decoration: underline; text-decoration-color: var(--color-border-line); text-underline-offset: 2px; margin-left: 6px; font-size: .92em; }
 .db-t a:hover { text-decoration-color: currentColor; }
@@ -260,6 +264,7 @@ table.db-t { border-collapse: collapse; width: 100%; font-size: var(--cds-font-s
         </div>
       </div>
       <div class="db-tw tall"><table class="db-t" id="t-criativos" data-source="criativos" data-row-key="criativo"></table></div>
+      <p class="db-note"><span class="db-hatch-key"></span><b>Ingr. orgânico:</b> compra com o criativo no utm_content, mas registrada por um link orgânico (bio, live, story, destaque) no utm_campaign. A pessoa clicou no anúncio e comprou depois por outro link, então a venda não aparece nas campanhas do Meta.</p>
     </div>
   </section>
 
@@ -377,7 +382,7 @@ table.db-t { border-collapse: collapse; width: 100%; font-size: var(--cds-font-s
       tables.set(table, state);
       const thead = el('thead'); const tr = el('tr');
       cols.forEach((c) => {
-        const th = el('th');
+        const th = el('th', c.thCls);
         th.dataset.field = c.field;
         if (c.source) th.dataset.source = c.source;
         if (opts.sortable) {
@@ -418,8 +423,8 @@ table.db-t { border-collapse: collapse; width: 100%; font-size: var(--cds-font-s
         const lo = arr.findIndex((x) => x >= v), hi = arr.length - 1 - [...arr].reverse().findIndex((x) => x <= v);
         let t = ((lo + hi) / 2) / (arr.length - 1);
         if (c.heat === 'low') t = 1 - t;
-        const k = Math.round(Math.abs(t - 0.5) * 2 * 55);
-        return k < 3 ? null : `color-mix(in srgb, var(${t > 0.5 ? '--color-ok' : '--color-bad'}) ${k}%, transparent)`;
+        const [a, b, q] = t < 0.5 ? ['--color-bad', '--db-heat-mid', t / 0.5 * 100] : ['--db-heat-mid', '--color-ok', (t - 0.5) / 0.5 * 100];
+        return `color-mix(in srgb, color-mix(in srgb, var(${a}), var(${b}) ${q.toFixed(0)}%) 34%, transparent)`;
       };
       tbody.replaceChildren(...rs.map((r) => {
         const tr = el('tr', opts.rowClass ? opts.rowClass(r) : null);
@@ -626,7 +631,7 @@ table.db-t { border-collapse: collapse; width: 100%; font-size: var(--cds-font-s
         { field: 'ingressos', label: 'Ingressos', fmt: 'int' },
         { field: 'ingressos_quente', label: 'Ingr. quente', fmt: 'int' },
         { field: 'ingressos_frio', label: 'Ingr. frio', fmt: 'int' },
-        { field: 'ingressos_organico', label: 'Ingr. orgânico', fmt: 'int' },
+        { field: 'ingressos_organico', label: 'Ingr. orgânico', fmt: 'int', cls: 'hatch', thCls: 'hatch' },
         { field: 'cpa', label: 'CPA ingresso', fmt: 'brl', heat: 'low' },
         { field: 'p3p_quente', label: 'P3P quente', fmt: 'int' },
         { field: 'conversao_quente', label: 'Conv. quente', fmt: 'pct' },
